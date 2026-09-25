@@ -2,7 +2,6 @@
   'use strict';
 
   const TOOLBAR_ID = 'ps-ai-ticket-tools';
-  const BUTTON_ID = 'ps-ai-summary-button';
   const COPY_BUTTON_ID = 'ps-ai-copy-button';
   const COLLAPSE_BUTTON_ID = 'ps-ai-collapse-button';
   const STATUS_ID = 'ps-ai-summary-status';
@@ -21,7 +20,6 @@
   let toolbarRefreshTimer = null;
   let statusResetTimer = null;
   let toolbarBusy = false;
-  let activeBusyButtonId = '';
   const expansionPromises = new WeakMap();
   const autoExpansionCompleted = new WeakSet();
   const autoExpansionScheduled = new WeakSet();
@@ -485,7 +483,7 @@
     return `Você é um analista técnico sênior. A partir do histórico de um chamado de suporte, produza um único texto que será COPIADO E COLADO diretamente na IA Claude para resolver o chamado e que também precisa ser compreensível para o desenvolvedor que vai assumir o chamado.
 
 TAREFA
-1. Comece com um RELATO BREVE: em 2 a 4 frases diretas, diga objetivamente do que se trata o chamado, sem enrolação e sem histórico desnecessário. É apenas um direcionamento rápido para quem for ler entender na hora o assunto.
+1. Comece com um RELATO BREVE: 2 a 4 frases diretas dizendo do que se trata o chamado para dar um contexto geral para o desenvolvedor.
 2. Depois faça o RESUMO TÉCNICO completo, para que o desenvolvedor entenda o problema.
 3. No final, monte um PROMPT PARA A IA resolver o chamado, escrito de forma que possa ser lido isoladamente pela IA Claude como uma instrução completa e autocontida.
 
@@ -512,25 +510,32 @@ REGRAS OBRIGATÓRIAS PARA TRABALHO NO REPOSITÓRIO
    - C:\portalsoft\script_banco_pratico\sqlserver.txt
    - C:\portalsoft\script_banco_pratico\anywhere.txt 
 6. Para alterações em triggers, procedures, funções e objetos semelhantes, a IA pode alterar diretamente o arquivo existente correspondente, sempre preservando o padrão atual.
-7. A IA pode consultar o esquema das tabelas no arquivo CSV D:\Extensão Resumo\praticodb.csv.
+7. Ao investigar o banco, a IA deve consultar o schema diretamente na base local indicada pelo desenvolvedor no fim do prompt, usando a conexão e as ferramentas disponíveis no computador dele. Não use arquivos CSV como fonte do schema.
+
+INSTRUÇÕES OBRIGATÓRIAS PARA O PROMPT DESTINADO AO CLAUDE
+1. Inclua o número e o assunto do ticket, o problema, o comportamento observado e o esperado, os dados concretos do histórico que ajudem na investigação e o que ainda não foi informado. Preserve os nomes e valores relevantes sem inventar contexto.
+2. Peça ao Claude que investigue o problema a fundo no repositório: localize o fluxo envolvido, acompanhe a origem dos dados até o comportamento relatado, examine implementações relacionadas e compare com os padrões já existentes.
+3. Peça que confronte as informações do chamado com o código e, quando disponíveis, logs, configurações e testes. Identifique a causa raiz somente quando houver evidência; caso contrário, descreva o que falta verificar e como reproduzir ou isolar o problema.
+4. Se o banco for relevante, peça que conecte ao banco no computador do desenvolvedor, selecione exclusivamente a base preenchida na última linha do prompt e consulte o schema atual diretamente nela. Verifique tabelas, colunas, tipos, chaves, índices, relacionamentos e objetos SQL pertinentes antes de propor mudanças. Não use um CSV nem presuma nomes ou estruturas.
+5. Se não houver acesso ao banco ou à base indicada, peça que informe o impedimento e quais dados de conexão ou permissões faltam. Não substitua a consulta por um schema presumido.
+6. Peça uma solução baseada no que foi verificado, com alterações na branch correta quando houver acesso ao repositório, validação por testes pertinentes e explicação da causa, do ajuste e de eventuais limitações. Inclua integralmente as regras de branch, commits e scripts SQL acima no prompt final.
+7. Termine o prompt para o Claude com a linha exata abaixo, para o desenvolvedor preencher antes de usá-lo. Ela deve ser a última linha de toda a resposta, sem texto posterior:
+Nome do banco de dados: [PREENCHER PELO DESENVOLVEDOR]
 
 
 FORMATO OBRIGATÓRIO DA RESPOSTA
 ## Relato breve
-2 a 4 frases diretas dizendo do que se trata o chamado.
+2 a 4 frases diretas dizendo do que se trata o chamado para dar um contexto geral para o desenvolvedor.
 
 ## Resumo técnico
 Explique o problema de forma que o desenvolvedor entenda, cobrindo:
 - Problema ou solicitação central: o que precisa ser corrigido, alterado ou investigado.
 - Comportamento atual: o que foi observado. Se não estiver claro, informe.
 - Comportamento esperado: o resultado desejado. Se não estiver claro, informe.
-- Linha do tempo relevante: apenas os acontecimentos importantes, pelas datas/horários disponíveis.
-- Evidências técnicas: mensagens de erro, códigos, IDs, exemplos, valores e regras concretas.
-- Hipóteses para investigação: marque cada item como HIPÓTESE; não apresente hipótese como causa confirmada.
 - Informações faltantes: apenas o que realmente ajudaria a reproduzir ou investigar.
 
 ## Prompt para a IA resolver o chamado
-Escreva um prompt autocontido, pronto para ser copiado e colado na IA Claude, pedindo que ela ajude a resolver o chamado. Esse prompt deve conter todo o contexto necessário (o problema, o comportamento atual e o esperado, as evidências, as restrições relevantes e as regras obrigatórias de trabalho no repositório e banco de dados) para que a IA consiga trabalhar sem precisar do histórico original. Peça que a IA proponha a solução técnica e, quando fizer sentido, o passo a passo para corrigir. Não afirme que a solução está garantida.
+Escreva um prompt autocontido, pronto para ser copiado e colado na IA Claude, que inclua o contexto necessário sem depender do histórico original. Oriente o Claude a investigar o código e o banco em profundidade antes de concluir a causa ou propor a correção. Reproduza as regras obrigatórias de trabalho no repositório e de scripts de banco; solicite implementação e validação quando houver acesso e informações suficientes. Não afirme que a solução está garantida. A última linha do prompt deve ser exatamente o campo para preenchimento do nome do banco indicado acima.
 
 ##colocar as barras dos caminhos das pastas na resposta
 
@@ -604,21 +609,6 @@ FIM DOS DADOS DO TICKET`;
     }
   }
 
-  function setPrimaryButtonLabel(value) {
-    const label = document.querySelector(`#${BUTTON_ID} .ps-ai-button-label`);
-
-    if (label) {
-      label.textContent = value;
-    }
-  }
-
-  function getToolbarButtons() {
-    return [
-      document.getElementById(BUTTON_ID),
-      document.getElementById(COPY_BUTTON_ID)
-    ].filter(Boolean);
-  }
-
   function isActionListReady(actionList) {
     return Boolean(
       actionList?.isConnected &&
@@ -630,27 +620,21 @@ FIM DOS DADOS DO TICKET`;
 
   function updateToolbarAvailability(actionList = findCurrentActionList(), options = {}) {
     const { preserveStatus = false } = options;
-    const buttons = getToolbarButtons();
+    const copyButton = document.getElementById(COPY_BUTTON_ID);
     const ready = isActionListReady(actionList);
     const disabled = toolbarBusy || !ready;
 
-    buttons.forEach((button) => {
-      button.disabled = disabled;
-      button.dataset.loading = toolbarBusy && button.id === activeBusyButtonId ? 'true' : 'false';
-      button.setAttribute('aria-disabled', String(disabled));
-    });
+    if (copyButton) {
+      copyButton.disabled = disabled;
+      copyButton.dataset.loading = String(toolbarBusy);
+      copyButton.setAttribute('aria-disabled', String(disabled));
+      copyButton.title = ready
+        ? 'Copiar prompt do chamado'
+        : 'Aguarde a expansão completa do histórico';
+    }
 
     if (toolbarBusy) {
       return ready;
-    }
-
-    setPrimaryButtonLabel(ready ? 'Resumir chamado com IA' : 'Carregando histórico...');
-
-    const copyButton = document.getElementById(COPY_BUTTON_ID);
-    if (copyButton) {
-      copyButton.title = ready
-        ? 'Copiar sem abrir o ChatGPT'
-        : 'Aguarde a expansão completa do histórico';
     }
 
     if (!preserveStatus) {
@@ -670,21 +654,13 @@ FIM DOS DADOS DO TICKET`;
     return ready;
   }
 
-  function setToolbarBusy(isBusy, activeButtonId = '') {
+  function setToolbarBusy(isBusy) {
     toolbarBusy = isBusy;
-    activeBusyButtonId = isBusy ? activeButtonId : '';
 
     updateToolbarAvailability(findCurrentActionList(), { preserveStatus: true });
   }
 
-  async function prepareSummaryPackage(activeButtonId) {
-    const isPrimaryAction = activeButtonId === BUTTON_ID;
-    const updatePrimaryLabel = (label) => {
-      if (isPrimaryAction) {
-        setPrimaryButtonLabel(label);
-      }
-    };
-
+  async function prepareSummaryPackage() {
     const actionList = findCurrentActionList();
 
     if (!actionList) {
@@ -694,12 +670,11 @@ FIM DOS DADOS DO TICKET`;
     if (!isActionListReady(actionList)) {
       updateToolbarAvailability(actionList);
       throw new Error(
-        'Aguarde a extensão terminar de expandir todos os apontamentos antes de resumir ou copiar o prompt.'
+        'Aguarde a extensão terminar de expandir todos os apontamentos antes de copiar o prompt.'
       );
     }
 
     autoExpansionCompleted.add(actionList);
-    updatePrimaryLabel('Estruturando...');
     setStatus('Histórico completo. Montando e copiando o prompt técnico...', 'loading');
 
     const ticket = extractTicket(actionList);
@@ -717,60 +692,6 @@ FIM DOS DADOS DO TICKET`;
     };
   }
 
-  function sendPrepareAiMessage(summaryPackage) {
-    return new Promise((resolve, reject) => {
-      try {
-        chrome.runtime.sendMessage({
-          type: 'PREPARE_AI',
-          prompt: summaryPackage.prompt,
-          promptHash: hashText(summaryPackage.prompt),
-          ticketNumber: summaryPackage.ticket.number
-        }, (response) => {
-          if (chrome.runtime.lastError || !response?.ok) {
-            reject(new Error(
-              response?.error ||
-              chrome.runtime.lastError?.message ||
-              'Não foi possível abrir o ChatGPT.'
-            ));
-            return;
-          }
-
-          resolve(response);
-        });
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async function handleSummarizeClick() {
-    const button = document.getElementById(BUTTON_ID);
-
-    if (!button || button.disabled) {
-      return;
-    }
-
-    setToolbarBusy(true, BUTTON_ID);
-    setPrimaryButtonLabel('Preparando...');
-    setStatus('Lendo e estruturando o histórico do ticket...', 'loading');
-
-    try {
-      const summaryPackage = await prepareSummaryPackage(BUTTON_ID);
-      setPrimaryButtonLabel('Abrindo ChatGPT...');
-      setStatus('Conteúdo copiado. Abrindo o ChatGPT para limpar e preencher o campo...', 'loading');
-      await sendPrepareAiMessage(summaryPackage);
-      setStatus(
-        'ChatGPT aberto. Limpando a caixa e colando o prompt atual automaticamente...',
-        'loading'
-      );
-    } catch (error) {
-      console.error('[Resumo Técnico de Chamados]', error);
-      setStatus(error?.message || 'Ocorreu um erro ao preparar o resumo.', 'error');
-    } finally {
-      setToolbarBusy(false);
-    }
-  }
-
   async function handleCopyClick() {
     const button = document.getElementById(COPY_BUTTON_ID);
 
@@ -778,11 +699,11 @@ FIM DOS DADOS DO TICKET`;
       return;
     }
 
-    setToolbarBusy(true, COPY_BUTTON_ID);
+    setToolbarBusy(true);
     setStatus('Preparando o conteúdo para copiar...', 'loading');
 
     try {
-      const summaryPackage = await prepareSummaryPackage(COPY_BUTTON_ID);
+      const summaryPackage = await prepareSummaryPackage();
       setStatus(
         `Prompt copiado com ${summaryPackage.ticket.actions.length} apontamentos.`,
         'success',
@@ -853,38 +774,27 @@ FIM DOS DADOS DO TICKET`;
     const actions = document.createElement('div');
     actions.className = 'ps-ai-actions';
 
-    const button = document.createElement('button');
-    button.id = BUTTON_ID;
-    button.type = 'button';
-    button.setAttribute('aria-describedby', STATUS_ID);
-
-    const icon = document.createElement('span');
-    icon.className = 'ps-ai-button-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = '✦';
-
-    const label = document.createElement('span');
-    label.className = 'ps-ai-button-label';
-    label.textContent = 'Carregando histórico...';
-
-    button.append(icon, label);
-    button.disabled = true;
-    button.setAttribute('aria-disabled', 'true');
-    button.addEventListener('click', handleSummarizeClick);
-
     const copyButton = document.createElement('button');
     copyButton.id = COPY_BUTTON_ID;
     copyButton.type = 'button';
     copyButton.className = 'ps-ai-copy-button';
-    copyButton.setAttribute('aria-label', 'Copiar resumo e evidências');
     copyButton.setAttribute('aria-describedby', STATUS_ID);
     copyButton.title = 'Aguarde a expansão completa do histórico';
-    copyButton.textContent = '⧉';
+
+    const copyIcon = document.createElement('span');
+    copyIcon.className = 'ps-ai-button-icon';
+    copyIcon.setAttribute('aria-hidden', 'true');
+    copyIcon.textContent = '⧉';
+
+    const copyLabel = document.createElement('span');
+    copyLabel.textContent = 'Copiar';
+
+    copyButton.append(copyIcon, copyLabel);
     copyButton.disabled = true;
     copyButton.setAttribute('aria-disabled', 'true');
     copyButton.addEventListener('click', handleCopyClick);
 
-    actions.append(button, copyButton);
+    actions.append(copyButton);
 
     const status = document.createElement('div');
     status.id = STATUS_ID;
@@ -900,26 +810,6 @@ FIM DOS DADOS DO TICKET`;
     toolbar.append(header, body);
     return toolbar;
   }
-
-  chrome.runtime.onMessage.addListener((message) => {
-    if (!message || message.type !== 'AI_AUTOMATION_RESULT') {
-      return false;
-    }
-
-    if (message.ok) {
-      setStatus(
-        'ChatGPT preparado: caixa limpa e prompt atual colado. Revise e envie.',
-        'success'
-      );
-      return false;
-    }
-
-    setStatus(
-      `${message.error || 'Não foi possível preparar o ChatGPT automaticamente.'} O conteúdo continua na área de transferência.`,
-      'warning'
-    );
-    return false;
-  });
 
   function scheduleAutoExpansion(actionList) {
     const remainingControls = findLoadMoreControls(actionList);

@@ -58,7 +58,6 @@
 }
 
 #ps-ai-ticket-tools .ps-ai-collapse-button:focus-visible,
-#ps-ai-summary-button:focus-visible,
 #ps-ai-copy-button:focus-visible {
   outline: 3px solid rgba(40, 153, 222, 0.35);
   outline-offset: 2px;
@@ -74,13 +73,12 @@
   gap: 8px;
 }
 
-#ps-ai-summary-button {
-  min-width: 0;
+#ps-ai-copy-button {
+  width: 100%;
   min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 auto;
   gap: 8px;
   padding: 10px 12px;
   border: 0;
@@ -92,47 +90,24 @@
   font-weight: 600;
   line-height: 1.25;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-}
-
-#ps-ai-copy-button {
-  width: 46px;
-  min-width: 46px;
-  min-height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid rgba(0, 81, 135, 0.3);
-  border-radius: 8px;
-  background: #ffffff;
-  color: #005187;
-  font: inherit;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1;
-  cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, opacity 120ms ease;
 }
 
-#ps-ai-summary-button:hover:not(:disabled),
 #ps-ai-copy-button:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(0, 81, 135, 0.2);
 }
 
 #ps-ai-copy-button:hover:not(:disabled) {
-  background: rgba(0, 81, 135, 0.06);
+  background: #00659c;
 }
 
-#ps-ai-summary-button:disabled,
 #ps-ai-copy-button:disabled {
   cursor: wait;
   opacity: 0.72;
 }
 
-#ps-ai-summary-button[data-loading='true'] .ps-ai-button-icon,
-#ps-ai-copy-button[data-loading='true'] {
+#ps-ai-copy-button[data-loading='true'] .ps-ai-button-icon {
   animation: ps-ai-spin 900ms linear infinite;
 }
 

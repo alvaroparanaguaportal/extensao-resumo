@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Resumo Técnico de Chamados - Portalsoft",
+  "version": "1.4.0",
+  "description": "Expande o histórico do chamado, monta um resumo técnico textual e prepara o ChatGPT automaticamente.",
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://ticket.portalsoft.com.br/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://ticket.portalsoft.com.br/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "chatgpt.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

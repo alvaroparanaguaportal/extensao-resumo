@@ -1,6 +1,6 @@
 # Resumo Técnico de Chamados - Portalsoft
 
-Versão: **1.4.1**
+Versão: **1.4.2**
 
 Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Portalsoft/Movidesk, expande o histórico, estrutura os apontamentos e chats e prepara um prompt técnico **somente de texto**, voltado ao desenvolvimento.
 
@@ -8,7 +8,7 @@ Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Porta
 
 - A extensão **não copia nem anexa mais imagens**. O resumo é feito apenas com o conteúdo textual do chamado.
 - O resumo é orientado para ser um **Ctrl C / Ctrl V direto para a IA Claude**: ele começa com um **relato breve** do que se trata o chamado, segue com o **resumo técnico** para o desenvolvedor entender e termina com um **prompt autocontido** para a IA resolver o chamado.
-- Botão **⧉ Copiar** para colocar o prompt na área de transferência.
+- Botão **⧉ Copiar Chamado** para colocar o prompt na área de transferência.
 - O botão fica bloqueado até todos os blocos `Carregar mais` do histórico serem expandidos.
 - O balão pode ser recolhido pela seta no canto superior direito e permanece visível em formato compacto.
 
@@ -42,7 +42,7 @@ Não mantenha duas cópias da extensão carregadas ao mesmo tempo.
 
 1. Abra um ticket.
 2. Aguarde a extensão terminar de expandir os blocos `Carregar mais`; o botão será liberado quando o histórico estiver completo.
-3. Clique em **⧉ Copiar**. A extensão lê o histórico e copia o prompt técnico para a área de transferência.
+3. Clique em **⧉ Copiar Chamado**. A extensão lê o histórico e copia o prompt técnico para a área de transferência.
 4. Cole o conteúdo na ferramenta de IA desejada.
 
 ### Recolher o balão

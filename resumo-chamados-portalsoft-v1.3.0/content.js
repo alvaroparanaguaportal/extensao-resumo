@@ -787,7 +787,7 @@ FIM DOS DADOS DO TICKET`;
     copyIcon.textContent = '⧉';
 
     const copyLabel = document.createElement('span');
-    copyLabel.textContent = 'Copiar';
+    copyLabel.textContent = 'Copiar Chamado';
 
     copyButton.append(copyIcon, copyLabel);
     copyButton.disabled = true;

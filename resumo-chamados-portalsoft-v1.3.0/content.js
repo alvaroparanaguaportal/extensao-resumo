@@ -16,6 +16,9 @@
   const MAX_LOAD_MORE_CLICKS = 100;
   const MAX_EXPANSION_DURATION_MS = 60000;
   const TOOLBAR_COLLAPSED_CLASS = 'ps-ai-collapsed';
+  const EMAIL_PATTERN = /\b([A-Z0-9._%+-]+)@([A-Z0-9.-]+\.[A-Z]{2,})\b/gi;
+  const MARKDOWN_LINK_PATTERN = /\[([^\]\n]+)\]\(([^)\n]+)\)/g;
+  const URL_PATTERN = /\b(?:https?:\/\/|www\.)[^\s<>"'`]+/gi;
 
   let toolbarRefreshTimer = null;
   let statusResetTimer = null;
@@ -31,6 +34,36 @@
       .replace(/[ \t\f\v]+/g, ' ')
       .replace(/\s*\n\s*/g, ' ')
       .trim();
+  }
+
+  function neutralizeUrlForCommand(value) {
+    return String(value ?? '')
+      .replace(/https?:\/\//i, (protocol) =>
+        protocol.toLowerCase().startsWith('https')
+          ? 'https dois pontos barra barra '
+          : 'http dois pontos barra barra '
+      )
+      .replace(/^www\./i, 'www ponto ')
+      .replace(/\./g, ' ponto ')
+      .replace(/\//g, ' barra ')
+      .replace(/:/g, ' dois pontos ')
+      .replace(/\?/g, ' interrogação ')
+      .replace(/&/g, ' e comercial ')
+      .replace(/=/g, ' igual ')
+      .replace(/#/g, ' cerquilha ');
+  }
+
+  function neutralizeCommandUnsafeText(value) {
+    return String(value ?? '')
+      .replace(MARKDOWN_LINK_PATTERN, (_match, label, url) =>
+        `${label} (link neutralizado: ${neutralizeUrlForCommand(url)})`
+      )
+      .replace(URL_PATTERN, (url) => `link neutralizado: ${neutralizeUrlForCommand(url)}`)
+      .replace(EMAIL_PATTERN, (_match, localPart, domain) =>
+        `${localPart} [arroba] ${domain.replace(/\./g, ' ponto ')}`
+      )
+      .replace(/@/g, ' [arroba] ')
+      .replace(/^(\s*)\/(?=\S)/gm, '$1barra /');
   }
 
   function extractStructuredText(element) {
@@ -440,9 +473,10 @@
       .map((message) => {
         const metadata = [message.time, message.type, message.author]
           .filter(Boolean)
+          .map(neutralizeCommandUnsafeText)
           .join(' | ');
 
-        return `  - [${metadata || 'CHAT'}] ${message.message}`;
+        return `  - [${metadata || 'CHAT'}] ${neutralizeCommandUnsafeText(message.message)}`;
       })
       .join('\n');
   }
@@ -450,10 +484,10 @@
   function formatAction(action, index) {
     const metadata = [
       `ordem DOM: ${index + 1}`,
-      `número: ${action.number || 'não informado'}`,
-      `autor: ${action.author || 'não informado'}`,
-      `data: ${action.createdDate || 'não informada'}`,
-      `tipo: ${action.actionType || 'não informado'}`
+      `número: ${neutralizeCommandUnsafeText(action.number || 'não informado')}`,
+      `autor: ${neutralizeCommandUnsafeText(action.author || 'não informado')}`,
+      `data: ${neutralizeCommandUnsafeText(action.createdDate || 'não informada')}`,
+      `tipo: ${neutralizeCommandUnsafeText(action.actionType || 'não informado')}`
     ].join(' | ');
 
     const chatWarning = action.chatMayBeTruncated
@@ -466,15 +500,15 @@
 
     const body = action.hasChatContainers
       ? `CHAT ESTRUTURADO:${chatWarning}\n${chatBody}`
-      : `CONTEÚDO:\n${action.content || '[sem conteúdo textual]'}`;
+      : `CONTEÚDO:\n${neutralizeCommandUnsafeText(action.content || '[sem conteúdo textual]')}`;
 
     return `APONTAMENTO ${index + 1}\n${metadata}\n${body}`;
   }
 
   function buildPrompt(ticket) {
     const ticketHeader = [
-      `Número do ticket: ${ticket.number || 'não identificado'}`,
-      `Assunto: ${ticket.subject || 'não identificado'}`,
+      `Número do ticket: ${neutralizeCommandUnsafeText(ticket.number || 'não identificado')}`,
+      `Assunto: ${neutralizeCommandUnsafeText(ticket.subject || 'não identificado')}`,
       `Total de apontamentos extraídos: ${ticket.actions.length}`
     ].join('\n');
 
@@ -483,24 +517,34 @@
     return `Você é um analista técnico sênior. A partir do histórico de um chamado de suporte, produza um único texto que será COPIADO E COLADO diretamente na IA Claude para resolver o chamado e que também precisa ser compreensível para o desenvolvedor que vai assumir o chamado.
 
 FORMATO DA RESPOSTA
-## Relato breve
+Não use formatação Markdown em nenhuma parte da resposta. Use somente texto puro.
+
+RELATO BREVE
 Escreva 2 a 4 frases diretas com o contexto geral do chamado para o desenvolvedor.
 
-## Resumo técnico
+RESUMO TÉCNICO
 Explique o problema de forma que o desenvolvedor entenda, cobrindo:
-- Problema ou solicitação central: o que precisa ser corrigido, alterado ou investigado.
-- Comportamento atual: o que foi observado. Se não estiver claro, informe.
-- Comportamento esperado: o resultado desejado. Se não estiver claro, informe.
-- informações faltantes: apenas o que realmente ajudaria a reproduzir ou investigar.
+Problema ou solicitação central: o que precisa ser corrigido, alterado ou investigado.
+Comportamento atual: o que foi observado. Se não estiver claro, informe.
+Comportamento esperado: o resultado desejado. Se não estiver claro, informe.
+Informações faltantes: apenas o que realmente ajudaria a reproduzir ou investigar.
 Se algum comportamento não estiver claro, diga isso.
 
-## Prompt para a IA resolver o chamado
+PROMPT PARA A IA RESOLVER O CHAMADO
 Escreva uma instrução completa para o Claude, independente das seções anteriores e do histórico original. Siga as orientações abaixo. A última linha desta seção deve ser a última linha de toda a resposta.
+
+COMPATIBILIDADE COM O CAMPO DE COMANDO DA IA QUE VAI RECEBER O PROMPT
+- A seção PROMPT PARA A IA RESOLVER O CHAMADO deve sair pronta para colar em um campo de comando que rejeita menções, comandos de barra, links e formatação inline.
+- Nessa seção, escreva somente texto puro: sem cabeçalhos com cerquilha, sem negrito, sem itálico, sem crases, sem blocos de código, sem links em Markdown e sem listas Markdown.
+- Não escreva menções com arroba. Quando um dado tiver arroba, mantenha a forma neutralizada com " [arroba] ".
+- Não escreva URLs clicáveis nem links completos. Quando precisar citar um link, use a forma neutralizada já presente nos dados, como "https dois pontos barra barra" e "ponto".
+- Não comece nenhuma linha com barra. Quando um dado começar com barra, mantenha "barra /" antes do valor.
+- Se o dado veio neutralizado em DADOS DO TICKET, não reconstrua o arroba nem a URL original no prompt final.
 
 CRITÉRIOS DE REDAÇÃO
 - Responda em português do Brasil. Priorize o que ajuda a reproduzir, investigar e corrigir o problema.
 - Não invente fatos, erros, causas, telas, tabelas, APIs, logs ou comportamentos. Distinga fatos confirmados de hipóteses técnicas, sem apresentar hipóteses como causas.
-- Preserve exatamente IDs, números de ticket, códigos, mensagens de erro, nomes de campos e termos técnicos relevantes.
+- Preserve exatamente IDs, números de ticket, códigos, mensagens de erro, nomes de campos e termos técnicos relevantes, exceto quando arrobas, links ou barras iniciais tiverem sido neutralizados para permitir a colagem no campo de comando.
 - Elimine saudações, mensagens automáticas, repetições e ruído operacional, salvo quando relevantes.
 - Use RECEBIDA, ENVIADA e SISTEMA apenas como contexto do chat. A ordem extraída é a do HTML; use datas e horários para interpretar a sequência quando necessário.
 - Declare explicitamente quando uma informação necessária não foi informada.

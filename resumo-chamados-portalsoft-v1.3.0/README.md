@@ -1,6 +1,6 @@
 # Resumo Técnico de Chamados - Portalsoft
 
-Versão: **1.4.2**
+Versão: **1.4.3**
 
 Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Portalsoft/Movidesk, expande o histórico, estrutura os apontamentos e chats e prepara um prompt técnico **somente de texto**, voltado ao desenvolvimento.
 
@@ -8,6 +8,7 @@ Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Porta
 
 - A extensão **não copia nem anexa mais imagens**. O resumo é feito apenas com o conteúdo textual do chamado.
 - O resumo é orientado para ser um **Ctrl C / Ctrl V direto para a IA Claude**: ele começa com um **relato breve** do que se trata o chamado, segue com o **resumo técnico** para o desenvolvedor entender e termina com um **prompt autocontido** para a IA resolver o chamado.
+- O prompt final é instruído a sair em texto puro, sem Markdown, menções com arroba, links clicáveis ou linhas iniciadas como comandos de barra.
 - Botão **⧉ Copiar Chamado** para colocar o prompt na área de transferência.
 - O botão fica bloqueado até todos os blocos `Carregar mais` do histórico serem expandidos.
 - O balão pode ser recolhido pela seta no canto superior direito e permanece visível em formato compacto.
@@ -53,9 +54,11 @@ Clique em **▾** no canto superior direito do painel. O painel vira um botão c
 
 O prompt instrui a IA a responder sempre nesta estrutura:
 
-- **## Relato breve** — 2 a 4 frases diretas dizendo do que se trata o chamado para dar um contexto geral para o desenvolvedor.
-- **## Resumo técnico** — problema central, comportamento atual e esperado e informações faltantes, para o desenvolvedor entender.
-- **## Prompt para a IA resolver o chamado** — um prompt autocontido que orienta o Claude a investigar o repositório e, quando necessário, o banco local antes de corrigir e validar o problema.
+- **RELATO BREVE** — 2 a 4 frases diretas dizendo do que se trata o chamado para dar um contexto geral para o desenvolvedor.
+- **RESUMO TÉCNICO** — problema central, comportamento atual e esperado e informações faltantes, para o desenvolvedor entender.
+- **PROMPT PARA A IA RESOLVER O CHAMADO** — um prompt autocontido, em texto puro e seguro para colar em campos de comando, que orienta o Claude a investigar o repositório e, quando necessário, o banco local antes de corrigir e validar o problema.
+
+Para evitar o erro de colagem em campos de comando, dados do chamado que contenham arroba, URLs ou linhas começando com barra são neutralizados antes de entrar no prompt: arroba vira ` [arroba] `, links ficam em forma textual não clicável e barras iniciais recebem o prefixo `barra /`.
 
 O prompt final orienta a IA a nunca trabalhar na `master`, verificar antes se existe branch com o número do chamado, nunca commitar alterações e seguir os padrões de banco existentes em `C:\portalsoft\script_banco_pratico\script_banco_SQLAnywhere` e `C:\portalsoft\script_banco_pratico\script_banco_SQLServer`. Alterações estruturais de tabelas/colunas devem ser geradas na raiz `C:\portalsoft\script_banco_pratico\`, em arquivos separados chamados `numerodochamado-sqlserver.txt` e `numerodochamado-anywhere.txt`, substituindo `numerodochamado` pelo número real do ticket. Triggers, procedures, funções e objetos semelhantes podem ser alterados diretamente nos arquivos existentes.
 

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Configurar resumo técnico</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="popup-header">
+        <h1>Configuração</h1>
+        <p>Resumo Técnico de Chamados</p>
+      </header>
+
+      <form id="ps-ai-config-form">
+        <section class="config-section" aria-labelledby="paths-title">
+          <h2 id="paths-title">Caminhos</h2>
+
+          <label class="field">
+            <span>Source principal</span>
+            <input id="sourcePath" name="sourcePath" type="text" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Source do novo layout</span>
+            <input id="newLayoutSourcePath" name="newLayoutSourcePath" type="text" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Raiz dos scripts de banco</span>
+            <input id="databaseScriptsRootPath" name="databaseScriptsRootPath" type="text" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Scripts SQL Anywhere</span>
+            <input id="sqlAnywhereScriptsPath" name="sqlAnywhereScriptsPath" type="text" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Scripts SQL Server</span>
+            <input id="sqlServerScriptsPath" name="sqlServerScriptsPath" type="text" autocomplete="off" spellcheck="false">
+          </label>
+
+          <label class="field">
+            <span>Nome do banco de dados</span>
+            <input id="databaseName" name="databaseName" type="text" autocomplete="off" spellcheck="false">
+          </label>
+        </section>
+
+        <section class="config-section" aria-labelledby="modules-title">
+          <div class="section-heading">
+            <h2 id="modules-title">Módulos no novo layout</h2>
+            <button id="clear-modules-button" type="button" class="ghost-button">Limpar</button>
+          </div>
+
+          <div id="module-list" class="module-list"></div>
+        </section>
+
+        <footer class="popup-footer">
+          <button id="restore-defaults-button" type="button" class="secondary-button">Restaurar padrão</button>
+          <button type="submit" class="primary-button">Salvar</button>
+        </footer>
+
+        <div id="config-status" class="config-status" role="status" aria-live="polite"></div>
+      </form>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

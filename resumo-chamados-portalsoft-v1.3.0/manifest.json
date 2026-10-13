@@ -1,11 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Resumo Técnico de Chamados - Portalsoft",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Expande o histórico do chamado e copia um prompt técnico textual.",
   "permissions": [
-    "clipboardWrite"
+    "clipboardWrite",
+    "storage"
   ],
+  "action": {
+    "default_title": "Configurar resumo técnico",
+    "default_popup": "popup.html"
+  },
   "host_permissions": [
     "https://ticket.portalsoft.com.br/*"
   ],

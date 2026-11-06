@@ -1037,6 +1037,10 @@ FIM DOS DADOS DO TICKET`;
   }
 
   function ensureToolbar() {
+    if (!document.body) {
+      return;
+    }
+
     const actionList = findCurrentActionList();
     let toolbar = document.getElementById(TOOLBAR_ID);
 
@@ -1055,8 +1059,9 @@ FIM DOS DADOS DO TICKET`;
   }
 
   function scheduleToolbarRefresh() {
-    if (toolbarRefreshTimer) {
-      window.clearTimeout(toolbarRefreshTimer);
+    // Não adia indefinidamente a atualização em páginas com mudanças contínuas.
+    if (toolbarRefreshTimer !== null) {
+      return;
     }
 
     toolbarRefreshTimer = window.setTimeout(() => {
@@ -1065,10 +1070,20 @@ FIM DOS DADOS DO TICKET`;
     }, 250);
   }
 
-  const observer = new MutationObserver(scheduleToolbarRefresh);
+  const observer = new MutationObserver((mutations) => {
+    // Alterações no próprio painel não devem iniciar outro ciclo de atualização.
+    const pageChanged = mutations.some((mutation) =>
+      !(mutation.target instanceof Element && mutation.target.closest(`#${TOOLBAR_ID}`))
+    );
 
-  if (document.body) {
-    observer.observe(document.body, {
+    if (pageChanged) {
+      scheduleToolbarRefresh();
+    }
+  });
+
+  if (document.documentElement) {
+    // Continua observando a aplicação mesmo se ela substituir o body.
+    observer.observe(document.documentElement, {
       childList: true,
       subtree: true
     });

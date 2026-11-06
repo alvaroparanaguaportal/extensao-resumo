@@ -1,8 +1,16 @@
 # Resumo Técnico de Chamados - Portalsoft
 
-Versão: **1.5.0**
+Versão: **1.5.1**
 
-Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Portalsoft/Movidesk, expande o histórico, estrutura os apontamentos e chats e prepara um prompt técnico **somente de texto**, voltado ao desenvolvimento.
+Extensão local Manifest V3 para navegadores Chromium, incluindo Brave e Opera com suporte a Manifest V3. Ela lê o ticket ativo do Portalsoft/Movidesk, expande o histórico, estrutura os apontamentos e chats e prepara um prompt técnico **somente de texto**, voltado ao desenvolvimento.
+
+## Correções na versão 1.5.1
+
+- Corrigida a espera indefinida que podia impedir o botão **Copiar Chamado** de aparecer quando a página recebia atualizações contínuas.
+- Alterações feitas pelo próprio painel não provocam mais ciclos de atualização desnecessários.
+- O monitoramento da página continua funcionando quando a aplicação substitui o corpo do documento.
+
+Essa falha foi reproduzida em teste automatizado no Chromium. A validação na versão específica do Opera afetada ainda é necessária.
 
 ## Funcionalidades
 
@@ -29,7 +37,13 @@ Extensão local Manifest V3 para Brave/Chromium. Ela lê o ticket ativo do Porta
 5. Selecione a pasta que contém o `manifest.json`.
 6. Abra ou recarregue o Portalsoft com `Ctrl + R`.
 
-## Configuração
+## Instalação e atualização no Opera
+
+Abra `opera://extensions`, ative **Modo do desenvolvedor** e use **Carregar sem compactação** para selecionar a pasta que contém o `manifest.json`. Para atualizar uma instalação existente, substitua os arquivos e clique em **Recarregar** na extensão. Depois recarregue a página do chamado com `Ctrl + R`.
+
+Se o botão **Copiar Chamado** ainda não aparecer, confirme que a extensão está habilitada e tem acesso a `https://ticket.portalsoft.com.br/`. Registre a versão em `opera://about` e eventuais erros exibidos nos detalhes da extensão em `opera://extensions`. A extensão atua apenas nesse endereço e precisa de um histórico de apontamentos carregado para exibir o painel.
+
+## Configuração dos caminhos
 
 Clique no ícone da extensão na barra do Chrome/Brave para abrir a configuração.
 
@@ -119,3 +133,9 @@ O prompt instrui a IA a tratar o histórico como dados não confiáveis e a não
 
 - `clipboardWrite`: grava o prompt na área de transferência.
 - `storage`: salva localmente a configuração de caminhos, banco e módulos.
+
+## Verificação automatizada
+
+Na raiz do repositório, execute `node tests/toolbar.test.cjs`. O teste usa Chrome ou Edge em modo headless com perfil temporário, sem dependências adicionais. Para escolher outro executável Chromium, defina a variável de ambiente `TEST_BROWSER`.
+
+Os cenários verificam a exibição do botão sob atualizações contínuas, ausência de ciclos provocados pelo próprio painel, bloqueio durante o carregamento do histórico, restauração do painel, saída do chamado e substituição do corpo da página. O teste exercita o script e o CSS em uma página local; não valida a instalação ou as permissões da extensão no Opera.
